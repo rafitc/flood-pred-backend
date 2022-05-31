@@ -1,7 +1,7 @@
 
 #from crypt import methods
 from operator import methodcaller
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 import os
 from werkzeug.utils import secure_filename
 import json
@@ -9,9 +9,10 @@ import pandas as pd
 import numpy as np
 from keras.models import model_from_json
 import datetime
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 json_file = open('CNNmodel.json', 'r')
 loaded_model_json = json_file.read()
 json_file.close()
@@ -109,7 +110,26 @@ def getValue():
 	ref = db.reference("/")
 	j_value = ref.get()
 	k = j_value['predicted']
-	return k
+	k = json.loads(k)
+	print(k)
+	return jsonify(k)
+
+@app.route('/value', methods=["POST"])
+def storeValue():
+	name = request.form.get("name")
+	pin = request.form.get("pin")
+	mobile = request.form.get("mobile")
+	ref = db.reference("/")
+	ref.push({
+    "user": {
+            "name": name,
+            "pin": pin,
+            "mobile": mobile,
+  }
+})
+	return "Done"
+
+	
 
 if __name__ == '__main__':
 	app.run(port=600, host="0.0.0.0", debug=True)
