@@ -51,11 +51,11 @@ def admin():
 
 @app.route("/predict", methods=['GET', 'POST'])
 def predict():
-	uploaded_file = request.files['document']
-	data = json.load(request.files['data'])
-	filename = secure_filename(uploaded_file.filename)
-	uploaded_file.save(os.path.join('/Users/rafi/Desktop/rainPrediction/backend/flask-backend/files', filename))
-	print(data)
+	# uploaded_file = request.files['document']
+	# data = json.load(request.files['data'])
+	# filename = secure_filename(uploaded_file.filename)
+	# uploaded_file.save(os.path.join('/Users/rafi/Desktop/rainPrediction/backend/flask-backend/files', filename))
+	# print(data)
 	li = []
 	predicted_value = []
 	today = datetime.datetime.now()
@@ -119,6 +119,9 @@ def storeValue():
 	name = request.form.get("name")
 	pin = request.form.get("pin")
 	mobile = request.form.get("mobile")
+	if name == "" or pin == "" or mobile =="":
+		print("no entry found ")
+		return "error while registration" 
 	ref = db.reference("/")
 	ref.push({
     "user": {
@@ -129,7 +132,11 @@ def storeValue():
 })
 	return "Done"
 
-	
+@app.route('/file', methods=["POST"])
+def getfile():
+	f = request.files['file'] 
+	f.save(f.filename)  
+	return "done"
 
 if __name__ == '__main__':
 	app.run(port=600, host="0.0.0.0", debug=True)
