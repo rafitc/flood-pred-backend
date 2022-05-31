@@ -1,5 +1,5 @@
 
-from crypt import methods
+#from crypt import methods
 from operator import methodcaller
 from flask import Flask, render_template, request
 import os
@@ -30,11 +30,10 @@ firebase_admin.initialize_app(cred, {
 	'databaseURL':database_url
 })
 
-
-
 @app.route('/')
 def hello_world():
 	return 'Hello World'
+
 
 @app.route('/test_api',methods=['GET','POST'])            
 def test_api():
@@ -51,11 +50,11 @@ def admin():
 
 @app.route("/predict", methods=['GET', 'POST'])
 def predict():
-	# uploaded_file = request.files['document']
-	# data = json.load(request.files['data'])
-	# filename = secure_filename(uploaded_file.filename)
-	# uploaded_file.save(os.path.join('/Users/rafi/Desktop/rainPrediction/backend/flask-backend/files', filename))
-#	print(data)
+	uploaded_file = request.files['document']
+	data = json.load(request.files['data'])
+	filename = secure_filename(uploaded_file.filename)
+	uploaded_file.save(os.path.join('/Users/rafi/Desktop/rainPrediction/backend/flask-backend/files', filename))
+	print(data)
 	li = []
 	predicted_value = []
 	today = datetime.datetime.now()
@@ -102,9 +101,15 @@ def predict():
 	#check the date 
 	ref = db.reference("/predicted")
 	ref.set(jsonStr)
-	print("Dome")
+	print("Done")
 	return jsonStr
 
+@app.route('/getvalue', methods=["GET"])
+def getValue():
+	ref = db.reference("/")
+	j_value = ref.get()
+	k = j_value['predicted']
+	return k
 
 if __name__ == '__main__':
 	app.run(port=600, host="0.0.0.0", debug=True)
