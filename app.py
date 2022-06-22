@@ -15,6 +15,7 @@ from flask_cors import CORS
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from twilio.rest import Client
 
 app = Flask(__name__)
 CORS(app)
@@ -25,6 +26,11 @@ CORS(app)
 # loaded_model.load_weights("CNNmodel.h5") 
 # print("Loaded model from disk")  
 # loaded_model.summary()
+
+# Your Account SID from twilio.com/console
+account_sid = "AC6f9f263116ddd31b1c300a9519fd7530"
+# Your Auth Token from twilio.com/console
+auth_token  = "7d8272b867f0e9d78e57852978892b90"
 
 database_url = "https://rain-pred-default-rtdb.firebaseio.com"
 
@@ -37,6 +43,15 @@ firebase_admin.initialize_app(cred, {
 })
 
 kerala_dist = ["Nothing","Kasaragod","Kannur","Wayanad","Kozhikode","Malappuram","Palakkad","Thrissur","Ernakulam","Idukki","Kottayam","Alappuzha","Pathanamthitta","Kollam","Thiruvananthapuram"]
+
+
+def send_sms(toNumber, content):
+	client = Client(account_sid, auth_token)
+	message = client.messages.create(
+    	to=toNumber, 
+    	from_="+19897472583",
+    	body=content)
+	return(message.sid)
 
 @app.route('/')
 def hello_world():
@@ -203,13 +218,13 @@ def storeValue():
 	sms = "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="+otp_token
 	print(sms)
 	#send sms 
+
 	return "An OTP send to your Mobile Number. Click that to verify your Mobile Number | " + sms 
 
 def updateEntryinOTP(mobileNumber):
 	ref = db.reference("/")
 	j_value = ref.get()
 	for key in j_value:
-		
 		mobile = j_value.get(key).get('user').get('mobile')
 		print(mobile)
 		if mobile == mobileNumber:
@@ -246,6 +261,9 @@ def getfile():
 	f.save(f.filename)  
 	return "done"
 
+@app.route('/sms', methods=["GET"])
+def sendsms11():
+	return(send_sms("+919747165032", "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="))
 
 
 if __name__ == '__main__':
