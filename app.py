@@ -1,4 +1,3 @@
-
 #from crypt import methods
 from crypt import methods
 from operator import methodcaller
@@ -19,18 +18,18 @@ from twilio.rest import Client
 
 app = Flask(__name__)
 CORS(app)
-# json_file = open('CNNmodel.json', 'r')
-# loaded_model_json = json_file.read()
-# json_file.close()
-# loaded_model = model_from_json(loaded_model_json)
-# loaded_model.load_weights("CNNmodel.h5") 
-# print("Loaded model from disk")  
-# loaded_model.summary()
+json_file = open('CNNmodel.json', 'r')
+loaded_model_json = json_file.read()
+json_file.close()
+loaded_model = model_from_json(loaded_model_json)
+loaded_model.load_weights("CNNmodel.h5") 
+print("Loaded model from disk")  
+loaded_model.summary()
 
 # Your Account SID from twilio.com/console
-account_sid = "AC6f9f263116ddd31b1c300a9519fd7530"
+account_sid = ""
 # Your Auth Token from twilio.com/console
-auth_token  = "7d8272b867f0e9d78e57852978892b90"
+auth_token  = ""
 
 database_url = "https://rain-pred-default-rtdb.firebaseio.com"
 
@@ -58,14 +57,14 @@ def hello_world():
 	return render_template('index.html')
 
 
-@app.route('/test_api',methods=['GET','POST'])            
-def test_api():
-    uploaded_file = request.files['document']
-    data = json.load(request.files['data'])
-    filename = secure_filename(uploaded_file.filename)
-    uploaded_file.save(os.path.join('/Users/rafi/Desktop/rainPrediction/backend/flask-backend/files', filename))
-    print(data)
-    return 'success'
+# @app.route('/test_api',methods=['GET','POST'])            
+# def test_api():
+#     uploaded_file = request.files['document']
+#     data = json.load(request.files['data'])
+#     filename = secure_filename(uploaded_file.filename)
+#     uploaded_file.save(os.path.join('/Users/rafi/Desktop/rainPrediction/backend/flask-backend/files', filename))
+#     print(data)
+#     return 'success'
 
 @app.route('/admin',methods=['GET','POST'])            
 def admin():
@@ -121,62 +120,70 @@ def predict():
         "14": predicted_value[13],
     }
 	jsonStr = json.dumps(x)
+	jsonStr = json.loads(jsonStr)
 	#check the date 
 	ref = db.reference("/predicted")
 	ref.set(jsonStr)
 	print("Done")
 	return jsonStr
 
-@app.route('/getvalue', methods=["GET"])
-def getValue():
-	ref = db.reference("/")
-	j_value = ref.get()
-	k = j_value['predicted']
-	k = json.loads(k)
-	print(k)
-	return jsonify(k)
-
-@app.route("/formotp", methods=["GET"])
-def form():
-	return render_template('otp.html')
-
 from itsdangerous import URLSafeTimedSerializer
 import time
-def generate_confirmation_token(email):
-    serializer = URLSafeTimedSerializer("12ewewjindcdsk")
-    return serializer.dumps(email, salt="qwertyui")
 
+def generate_confirmation_token(mobile):
+    serializer = URLSafeTimedSerializer("12ewewjindcdsk")
+    return serializer.dumps(mobile, salt="qwertyui")
 
 def confirm_token(token, expiration=3600):
     serializer = URLSafeTimedSerializer("12ewewjindcdsk")
     try:
-        email = serializer.loads(
+        mobile = serializer.loads(
             token,
             salt="qwertyui",
             max_age=expiration
         )
     except:
         return "Time Expired "
-    return email
+    return mobile
 
-@app.route("/otp", methods=["GET"])
-def otp():
-	a = generate_confirmation_token("9747165032")
-	print(a)
-	time.sleep(2)
-	return(confirm_token(a, 3600))
+# @app.route("/get_value", methods=["GET"])
+# def valueOfpred():
+# 	ref = db.reference("/predicted")
+# 	j_value = ref.get()
+# 	print(j_value)
+# 	x = {
+#         "1": j_value[1],
+#         "2": j_value[2],
+#         "3": j_value[3],
+#         "4": j_value[4],
+#         "5": j_value[5],
+#         "6": j_value[6],
+#         "7": j_value[7],
+#         "8": j_value[8],
+#         "9": j_value[9],
+#         "10": j_value[10],
+#         "11": j_value[11],
+#         "12": j_value[12],
+#         "13": j_value[13],
+#         "14": j_value[14],
+#     }
+# 	print(type(x))
+# 	return x
+
 
 @app.route('/value', methods=["POST"])
 def storeValue():
 	name = request.form.get("name")
 	pin = request.form.get("pin")
 	mobile = request.form.get("mobile")
+	print(name, " ",pin, mobile)
 	if name == "" or name == " ":
 		return "cant find name field"
 	if pin == "" or pin == " ":
 		return "cant find Pin code"
 	if mobile == "" or mobile == " ":
 		return "cant find mobile number"
+
 	#pin code test
 	# value = requests.get("")
 	session = requests.Session()
@@ -204,7 +211,21 @@ def storeValue():
 	else:
 		return "Not in kerala"
 
-	ref = db.reference("/")
+	ref = db.reference("/members")
+	j_value = ref.get()
+	for key in j_value:
+		Firebae_mobile = j_value.get(key).get('user').get('mobile')
+		Firebae_verify = j_value.get(key).get('user').get('otp')
+		if mobile == Firebae_mobile and Firebae_verify == True:
+			return "Already registerd user"
+		if mobile == Firebae_mobile and Firebae_verify == False:
+			otp_token = generate_confirmation_token(mobile)
+			sms = "click here to Reverify your mobile number with in 1Hr. http://localhost:600/token?key="+otp_token
+			print(sms)
+			#send sms 
+			#print(send_sms("+919747165032", sms))
+			return sms 
+			
 	ref.push({
     "user": {
             "name": name,
@@ -212,17 +233,16 @@ def storeValue():
 			"dist": a,
             "mobile": mobile,
 			"otp": False,
-  }
-})
+  }})
 	otp_token = generate_confirmation_token(mobile)
 	sms = "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="+otp_token
 	print(sms)
 	#send sms 
-
-	return "An OTP send to your Mobile Number. Click that to verify your Mobile Number | " + sms 
+	#print(send_sms("+919747165032", sms))
+	return sms 
 
 def updateEntryinOTP(mobileNumber):
-	ref = db.reference("/")
+	ref = db.reference("/members")
 	j_value = ref.get()
 	for key in j_value:
 		mobile = j_value.get(key).get('user').get('mobile')
@@ -244,10 +264,11 @@ def updateEntryinOTP(mobileNumber):
 	else:
 		return "Something went wrong"
 	
+#To verify Mobile number 
 @app.route('/token/', methods=["GET"])
 def verify():
 	key = request.args.get('key')
-	print(key)
+#	print(key)
 	try:
 		mob = confirm_token(key)
 	except:
@@ -255,16 +276,53 @@ def verify():
 	print("mob : ", mob)
 	return(updateEntryinOTP(mob))
 
-@app.route('/file', methods=["POST"])
-def getfile():
-	f = request.files['file'] 
-	f.save(f.filename)  
-	return "done"
+# @app.route('/file', methods=["POST"])
+# def getfile():
+# 	f = request.files['file'] 
+# 	f.save(f.filename)  
+# 	return "done"
 
-@app.route('/sms', methods=["GET"])
-def sendsms11():
-	return(send_sms("+919747165032", "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="))
+# @app.route('/sendsms', methods=["GET"])
+# def sendsms11():
+# 	return(send_sms("+919747165032", "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="))
+
+#To send SMS notification 
+@app.route('/notify', methods=["GET"])
+def notify():
+	ref = db.reference("/predicted")
+	get_json = ref.get()
+	flood_dist = []
+	#get flooded dist 
+	count = -1
+	for each in get_json:
+		count += 1
+		if count == 0:
+			continue
+		if 1 == int(each):
+			flood_dist.append(count)
+	print("Flood districts are : ")
+	for x in flood_dist:
+		print(kerala_dist[x])
+	#sending sms 
+	ref = db.reference("/members")
+	j_value = ref.get()
+	for key in j_value:
+		name = j_value.get(key).get('user').get('name')
+		dist = j_value.get(key).get('user').get('dist')
+		mobile = j_value.get(key).get('user').get('mobile')
+		verified = j_value.get(key).get('user').get('otp')
+		if dist in flood_dist and verified == True:
+			print("I'm sending alert to ", mobile)
+			#send sms 
+			sms = "Hello " + name +", There is a chance of flooding the next day in your district. Please take care."
+			#send_sms(mobile, sms)
+			print(sms)
+	return "Ok"
+	
+@app.route('/register', methods=["GET"])
+def reguser():
+	return render_template("register.html")
 
 
 if __name__ == '__main__':
-	app.run(port=600, host="0.0.0.0", debug=True)
+	app.run(port=600, host="0.0.0.0", debug=True) 

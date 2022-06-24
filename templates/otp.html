@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript">
+      function myfunction() {
+        let xhr = new XMLHttpRequest();
+        xhr.open("get", "https://jsonplaceholder.typicode.com/posts/1");
+        xhr.send();
+
+        xhr.onload = function () {
+          console.log(xhr.response);
+        };
+        //alert(res);
+      }
+    </script>
+  </head>
+  <body>
+    <h2>OTP verification</h2>
+
+    <form>
+      <label for="fname">Enter 6 Digit OTP:</label><br />
+      <input type="text" id="fname" name="fname" /><br />
+      <input type="submit" value="Submit" onclick="myfunction()" />
+    </form>
+  </body>
+</html>
+
+<!-- let data = {element: "barium"};
+
+fetch("/post/data/here", {
+  method: "POST",
+  headers: {'Content-Type': 'application/json'}, 
+  body: JSON.stringify(data)
+}).then(res => {
+  console.log("Request complete! response:", res);
+}); -->
