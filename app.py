@@ -1,7 +1,7 @@
 #from crypt import methods
 from crypt import methods
 from operator import methodcaller
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, flash 
 import os
 from matplotlib.pyplot import prism
 from werkzeug.utils import secure_filename
@@ -31,7 +31,10 @@ account_sid = ""
 # Your Auth Token from twilio.com/console
 auth_token  = ""
 
+verified_mob_num = "+919946169099"
+
 database_url = "https://rain-pred-default-rtdb.firebaseio.com"
+
 
 import firebase_admin
 from firebase_admin import credentials, db
@@ -46,11 +49,16 @@ kerala_dist = ["Nothing","Kasaragod","Kannur","Wayanad","Kozhikode","Malappuram"
 
 def send_sms(toNumber, content):
 	client = Client(account_sid, auth_token)
-	message = client.messages.create(
-    	to=toNumber, 
+	
+	try:
+		message = client.messages.create(
+    	to=verified_mob_num, 
     	from_="+19897472583",
     	body=content)
-	return(message.sid)
+		status = message.sid
+	except:
+		status = "error"
+	return(status)
 
 @app.route('/')
 def hello_world():
@@ -146,29 +154,29 @@ def confirm_token(token, expiration=3600):
         return "Time Expired "
     return mobile
 
-# @app.route("/get_value", methods=["GET"])
-# def valueOfpred():
-# 	ref = db.reference("/predicted")
-# 	j_value = ref.get()
-# 	print(j_value)
-# 	x = {
-#         "1": j_value[1],
-#         "2": j_value[2],
-#         "3": j_value[3],
-#         "4": j_value[4],
-#         "5": j_value[5],
-#         "6": j_value[6],
-#         "7": j_value[7],
-#         "8": j_value[8],
-#         "9": j_value[9],
-#         "10": j_value[10],
-#         "11": j_value[11],
-#         "12": j_value[12],
-#         "13": j_value[13],
-#         "14": j_value[14],
-#     }
-# 	print(type(x))
-# 	return x
+@app.route("/get_value", methods=["GET"])
+def valueOfpred():
+	ref = db.reference("/predicted")
+	j_value = ref.get()
+	print(j_value)
+	x = {
+        "1": j_value[1],
+        "2": j_value[2],
+        "3": j_value[3],
+        "4": j_value[4],
+        "5": j_value[5],
+        "6": j_value[6],
+        "7": j_value[7],
+        "8": j_value[8],
+        "9": j_value[9],
+        "10": j_value[10],
+        "11": j_value[11],
+        "12": j_value[12],
+        "13": j_value[13],
+        "14": j_value[14],
+    }
+	print(type(x))
+	return x
 
 
 @app.route('/value', methods=["POST"])
@@ -209,10 +217,20 @@ def storeValue():
 		a = kerala_dist.index(dist)
 		print(a)
 	else:
-		return "Not in kerala"
+		return render_template("invalid_pin_code.html")
 
 	ref = db.reference("/members")
 	j_value = ref.get()
+	if j_value == None:
+		ref.push({
+    	"user": {
+            "name": name,
+            "pin": pin,
+			"dist": a,
+            "mobile": mobile,
+			"otp": False,
+  		}})
+	time.sleep(1)
 	for key in j_value:
 		Firebae_mobile = j_value.get(key).get('user').get('mobile')
 		Firebae_verify = j_value.get(key).get('user').get('otp')
@@ -220,10 +238,10 @@ def storeValue():
 			return "Already registerd user"
 		if mobile == Firebae_mobile and Firebae_verify == False:
 			otp_token = generate_confirmation_token(mobile)
-			sms = "click here to Reverify your mobile number with in 1Hr. http://localhost:600/token?key="+otp_token
+			sms = "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="+otp_token
 			print(sms)
 			#send sms 
-			#print(send_sms("+919747165032", sms))
+			print(send_sms("+919747165032", sms))
 			return sms 
 			
 	ref.push({
@@ -238,8 +256,8 @@ def storeValue():
 	sms = "click here to verify your mobile number with in 1Hr. http://localhost:600/token?key="+otp_token
 	print(sms)
 	#send sms 
-	#print(send_sms("+919747165032", sms))
-	return sms 
+	print(send_sms("+919747165032", sms))
+	return render_template("check_mobile.html") 
 
 def updateEntryinOTP(mobileNumber):
 	ref = db.reference("/members")
@@ -260,7 +278,7 @@ def updateEntryinOTP(mobileNumber):
          			"mobile": mobile,
 					"otp": True,
   }})
-			return "You are succesfully authenticated your Mobile number"
+			return render_template("mobile_verified.html")
 	else:
 		return "Something went wrong"
 	
@@ -315,7 +333,7 @@ def notify():
 			print("I'm sending alert to ", mobile)
 			#send sms 
 			sms = "Hello " + name +", There is a chance of flooding the next day in your district. Please take care."
-			#send_sms(mobile, sms)
+			print(send_sms(mobile, sms))
 			print(sms)
 	return "Ok"
 	
@@ -323,6 +341,11 @@ def notify():
 def reguser():
 	return render_template("register.html")
 
+	
+@app.route('/flash', methods=["GET"])
+def fla():
+	flash("hello")
+	return render_template("register.html")
 
 if __name__ == '__main__':
 	app.run(port=600, host="0.0.0.0", debug=True) 

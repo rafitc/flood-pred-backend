@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script type="text/javascript">
+      function myfunction() {
+        alert("how are you");
+      }
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Flood Prediction</title>
@@ -85,12 +90,38 @@
       </header>
     </div>
     <div class="container">
-      <h1>Flood Prediction!</h1>
+      <div>
+        <h1 class="text-center text-dark fw-bold">Flood!</h1>
+        <h1 class="text-center text-info fw-bold">Prediction System</h1>
+        <p class="text-center text-secondary">
+          Register your number and pincode to get flood prediction notification
+        </p>
+      </div>
+      <div class="container d-grid gap-2 col-6 mx-auto">
+        <button
+          type="button"
+          onclick="location.href='/register';"
+          class="btn text-center text-light fw-bold item-center btn-info btn-lg"
+        >
+          Register to get SMS Alert
+        </button>
+      </div>
+      <br />
+      <br />
       <div id="map"></div>
+      <br />
+      <br />
+      <div class="container text-center">
+        <h1 class="text-dark fw-bold">How rain prediction works</h1>
+        <p class="text-secondary">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus
+          malesuada nisi tellus, non imperdiet nisi tempor at.
+        </p>
+      </div>
     </div>
     <script>
       async function getUsers() {
-        let url = "/get_value";
+        let url = "http://localhost:600/get_value";
         try {
           let res = await fetch(url);
           return await res.json();
