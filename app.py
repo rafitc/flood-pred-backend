@@ -31,7 +31,7 @@ account_sid = ""
 # Your Auth Token from twilio.com/console
 auth_token  = ""
 
-verified_mob_num = "+919946169099"
+verified_mob_num = ""
 
 database_url = "https://rain-pred-default-rtdb.firebaseio.com"
 
